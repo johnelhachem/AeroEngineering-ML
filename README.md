@@ -10,7 +10,7 @@ AeroFusion reconstructs aircraft trajectories across long oceanic surveillance b
 |-----------------------|-------------|-------------|
 | Great-circle baseline | 131 km      | —           |
 | Kalman smoother       | 83 km       | −37%        |
-| GRU v2 (ours)         | 64 km       | −51%        |
+| GRU                   | 64 km       | −51%        |
 
 Evaluated on 240 held-out transatlantic crossings (split by aircraft ICAO24).
 Mean oceanic blackout duration: ~239 minutes.
