@@ -44,11 +44,10 @@ AeroFusion/
 │       ├── step6_analytics.py
 │       ├── step7_serve.py
 │       ├── step8_monitoring.py
-│       └── utils/
-│           ├── __init__.py
-│           ├── trino_io.py
-│           ├── validation.py
-│           └── emissions_calculator.py
+│       ├── __init__.py
+│       ├── trino_io.py
+│       ├── validation.py
+│       └── emissions_calculator.py
 │
 ├── notebooks/
 │   ├── 01_ingest_flight_data.ipynb
