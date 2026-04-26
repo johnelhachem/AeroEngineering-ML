@@ -1,3 +1,5 @@
+<img width="1193" height="655" alt="image" src="https://github.com/user-attachments/assets/2d6ee28e-9ae1-4136-9d8c-8a6221ea67f1" />
+
 # AeroFusion — ADS-B/ADS-C Trajectory Fusion for Oceanic Gap-Filling
 
 AeroFusion reconstructs aircraft trajectories across long oceanic surveillance blackouts by fusing sparse ADS-C waypoints with ADS-B context before and after the gap. The project targets North Atlantic crossings, where continuous ADS-B coverage is unavailable, and compares a great-circle baseline, a Kalman smoother, and a GRU v2 sequence model trained on OpenSky ADS-B and ADS-C data.
