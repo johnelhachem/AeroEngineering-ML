@@ -1,0 +1,35 @@
+# Artifacts — too large for GitHub (model weights, data files)
+artifacts/
+
+# But keep these result files visible
+!artifacts/.gitkeep
+!artifacts/step5_gru/test_summary.json
+!artifacts/step5_gru_v2/test_summary.json
+!artifacts/step5_kalman/test_summary.json
+!artifacts/step3_baseline/catalog/baseline_summary.json
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Data files
+*.npz
+*.parquet
+*.csv
+*.pt
+
+# Environment
+.env
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
