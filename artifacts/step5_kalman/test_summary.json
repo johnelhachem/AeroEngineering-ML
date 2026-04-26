@@ -1,0 +1,50 @@
+{
+  "config": {
+    "step2_root": "C:\\Users\\ANTOINE\\OneDrive\\Desktop\\AeroEngineering - Final Version\\artifacts\\step2_clean",
+    "step4_dataset_root": "C:\\Users\\ANTOINE\\OneDrive\\Desktop\\AeroEngineering - Final Version\\artifacts\\step4_ml_dataset\\dataset",
+    "output_root": "C:\\Users\\ANTOINE\\OneDrive\\Desktop\\AeroEngineering - Final Version\\artifacts\\step5_kalman",
+    "context_mode": "resampled_local",
+    "resample_seconds": 60,
+    "before_context_limit": null,
+    "after_context_limit": null,
+    "tuning_grid": "deep",
+    "max_flights_per_split": null,
+    "tune_on_split": "val",
+    "verbose": true,
+    "clean_existing_output": true
+  },
+  "prepared_counts": {
+    "train": 1094,
+    "val": 189,
+    "test": 240
+  },
+  "selected_params": {
+    "measurement_std_m": 2000.0,
+    "accel_std_along_mps2": 0.001,
+    "accel_std_cross_mps2": 0.01
+  },
+  "validation_summary": {
+    "split": "val",
+    "n_flights": 189,
+    "kalman_mean_error_km": 85.05391405340653,
+    "kalman_median_error_km": 72.55629931640625,
+    "kalman_p90_error_km": 197.04155312500012,
+    "baseline_mean_error_km": 133.23937673650423,
+    "baseline_median_error_km": 119.12585286458332,
+    "baseline_p90_error_km": 313.67930625000014,
+    "improvement_mean_pct": 36.16458126968715,
+    "improvement_median_pct": 39.09273464015839
+  },
+  "test_summary": {
+    "split": "test",
+    "n_flights": 240,
+    "kalman_mean_error_km": 98.10163912797746,
+    "kalman_median_error_km": 82.7493056640625,
+    "kalman_p90_error_km": 221.84780156250008,
+    "baseline_mean_error_km": 149.53616054667506,
+    "baseline_median_error_km": 131.03873022460937,
+    "baseline_p90_error_km": 354.75945625,
+    "improvement_mean_pct": 34.39604255630411,
+    "improvement_median_pct": 36.85126105676962
+  }
+}

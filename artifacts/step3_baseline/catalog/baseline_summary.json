@@ -1,0 +1,12 @@
+{
+  "flights_evaluated": 1704,
+  "baseline_method": "great_circle_time_aligned",
+  "mean_of_mean_error_m": 132110.10596542642,
+  "median_of_mean_error_m": 114324.44487816289,
+  "mean_rmse_error_m": 140433.79717243186,
+  "median_rmse_error_m": 121909.0694156164,
+  "mean_max_error_m": 181152.63931351862,
+  "median_max_error_m": 157155.4501476674,
+  "mean_path_length_abs_error_m": 40904.89045094184,
+  "median_path_length_abs_error_m": 33220.157048202585
+}

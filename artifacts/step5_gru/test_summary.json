@@ -1,0 +1,21 @@
+{
+  "version": "v2_improved",
+  "changes": [
+    "exact haversine loss",
+    "sequential GRU decoder",
+    "last ADS-B dynamics in decoder context",
+    "hidden size 160"
+  ],
+  "best_epoch": 40,
+  "best_val_loss": 79976.22721354167,
+  "test_flights": 240,
+  "gru_mean_error_km": 84.34123229980469,
+  "gru_median_error_km": 63.951602935791016,
+  "gru_p90_error_km": 170.5772247314453,
+  "baseline_mean_error_km": 149.5361785888672,
+  "baseline_median_error_km": 131.0386962890625,
+  "improvement_mean_pct": 43.59810256958008,
+  "improvement_median_pct": 51.19639587402344,
+  "altitude_rmse_ft": 412.2236633300781,
+  "model_params": 1045795
+}
