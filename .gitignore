@@ -33,3 +33,23 @@ Thumbs.db
 
 # Jupyter checkpoints
 .ipynb_checkpoints/
+*.pyd
+.Python
+# Virtual environment
+venv/
+env/
+# Large artifact files — live in Docker image, not Git
+artifacts/step1_master/
+artifacts/step2_clean/flights/
+artifacts/step4_ml_dataset/
+artifacts/step5_gru/
+artifacts/step5_gru_v2/best_model.pt
+artifacts/step5_gru_v2/test_predictions.npz
+artifacts/demo_regions/
+notebooks/.ipynb_checkpoints/
+# Logs
+*.log
+# Local scripts not part of the project
+fetch_demo_regions*.py
+validate_final_dataset.py
+check_source_quality.py

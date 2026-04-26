@@ -1,0 +1,12 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+ 
+fastapi
+uvicorn
+streamlit
+plotly
+numpy<2
+pandas
+pyarrow
+torch==2.2.2+cpu
+joblib
+trino
