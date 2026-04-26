@@ -1,6 +1,7 @@
+	
 """Interactive Streamlit demo for AeroFusion trajectory reconstruction."""
 
-import sys, json, math
+import sys, json, math, urllib.request, urllib.error
 from pathlib import Path
 from datetime import datetime
 
@@ -346,23 +347,61 @@ AIRLINE_MAP = {
     "ACA":"Air Canada","WJA":"WestJet","AZA":"ITA Airways",
     "THY":"Turkish Airlines","SWR":"Swiss","AUA":"Austrian Airlines",
     "KLM":"KLM","SAS":"Scandinavian Airlines","NOZ":"Norwegian",
+    "MSR":"EgyptAir","ETH":"Ethiopian Airlines","ELY":"El Al",
+    "TOM":"TUI Airways","TRA":"Transavia","WZZ":"Wizz Air",
+    "QTR":"Qatar Airways","UAE":"Emirates","ETD":"Etihad",
+    "EJM":"ExecJet","N47":"Private","GEM":"Gemini Air Cargo",
 }
 
 DEMO_HIGHLIGHTS = [
-    "20250801_4007f1_173814_202441",
-    "20231114_485341_032118_043049",
-    "20240827_4b187f_064414_074830",
-    "20231011_a0f427_041753_051756",
-    "20250703_4005c0_202353_224235",
-    "20250326_4006c1_151222_174303",
-    "20240822_ac21af_054936_065856",
-    "20231105_a0a54d_030849_041552",
-    "20240710_4007f0_092932_103853",
-    "20250318_400773_201647_221532",
+    # Route                Airline  GRU err  Why included
+    "20231105_a0a54d_030849_041552",  # EWR→BRU  UAL    16.8km   EASTBOUND, GRU best showcase
+    "20250329_4b1883_132449_153308",  # ZRH→YYZ  SWR    29.3km   Zurich→Toronto
+    "20250319_4005c0_152300_180926",  # DOH→JFK  BAW    79.5km   Doha→New York
+    "20250801_4007f1_173814_202441",  # LGW→JFK  BAW    45.1km   Classic transatlantic
+    "20250729_400773_193333_215630",  # LHR→JFK  BAW    76.6km   Heathrow 2025
+    "20250214_400773_210838_231648",  # LHR→ATL  BAW    62.2km   London→Atlanta
+    "20250703_aab812_102726_123306",  # CDG→CLT  AAL    98.2km   Paris→Charlotte
+    "20250731_485f82_101311_120739",  # AMS→SFO  KLM    40.0km   Amsterdam→San Francisco
+    "20250313_aa2184_162016_182107",  # MAD→DFW  AAL    92.5km   Madrid→Dallas
+    "20240710_4007f0_092932_103853",  # MCO→LGW  BAW    38.0km   EASTBOUND, Orlando→London
+    "20241220_4b1883_192140_213810",  # ZRH→BOS  SWR    66.6km   Zurich→Boston, 2024
+    "20231118_4005bd_022514_042151",  # JFK→LHR  BAW    69.9km   EASTBOUND, 2023
+    # Original demo flights added back
+    "20231114_485341_032118_043049",  # IAH→AMS  KLM    EASTBOUND Houston→Amsterdam
+    "20240827_4b187f_064414_074830",  # JFK→ZRH  SWR    EASTBOUND JFK→Zurich
+    "20231011_a0f427_041753_051756",  # EWR→?    UAL    EASTBOUND Newark outbound
+    "20250703_4005c0_202353_224235",  # LHR→JFK  BAW    139min 23pts
+    "20250326_4006c1_151222_174303",  # LGW→MCO  BAW    151min 23pts
+    "20240822_ac21af_054936_065856",  # PHL→MAD  AAL    26.3km   EASTBOUND, strong GRU
+    "20250318_400773_201647_221532",  # LHR→EWR  BAW    119min 16pts
 ]
 
 MONTH_NAMES = {1:"Jan",2:"Feb",3:"Mar",4:"Apr",5:"May",6:"Jun",
                7:"Jul",8:"Aug",9:"Sep",10:"Oct",11:"Nov",12:"Dec"}
+
+# dep/arr overrides for demo flights — stored as 3-letter IATA codes
+DEMO_AIRPORTS = {
+    "20231105_a0a54d_030849_041552": ("EWR", "BRU"),   # Newark → Brussels (EASTBOUND)
+    "20250329_4b1883_132449_153308": ("ZRH", "YYZ"),   # Zurich → Toronto
+    "20250319_4005c0_152300_180926": ("DOH", "JFK"),   # Doha → New York JFK
+    "20250801_4007f1_173814_202441": ("LGW", "JFK"),   # London Gatwick → JFK
+    "20250729_400773_193333_215630": ("LHR", "JFK"),   # London Heathrow → JFK
+    "20250214_400773_210838_231648": ("LHR", "ATL"),   # London Heathrow → Atlanta
+    "20250703_aab812_102726_123306": ("CDG", "CLT"),   # Paris → Charlotte
+    "20250731_485f82_101311_120739": ("AMS", "SFO"),   # Amsterdam → San Francisco
+    "20250313_aa2184_162016_182107": ("MAD", "DFW"),   # Madrid → Dallas
+    "20240710_4007f0_092932_103853": ("MCO", "LGW"),   # Orlando → London (EASTBOUND)
+    "20241220_4b1883_192140_213810": ("ZRH", "BOS"),   # Zurich → Boston
+    "20231118_4005bd_022514_042151": ("JFK", "LHR"),   # New York JFK → London (EASTBOUND)
+    "20231114_485341_032118_043049": ("IAH", "AMS"),   # Houston → Amsterdam (EASTBOUND)
+    "20240827_4b187f_064414_074830": ("JFK", "ZRH"),   # JFK → Zurich (EASTBOUND)
+    "20231011_a0f427_041753_051756": ("EWR", None),    # Newark outbound (arr unknown)
+    "20250703_4005c0_202353_224235": ("LHR", "JFK"),   # London Heathrow → JFK
+    "20250326_4006c1_151222_174303": ("LGW", "MCO"),   # London Gatwick → Orlando
+    "20240822_ac21af_054936_065856": ("PHL", "MAD"),   # Philadelphia → Madrid (EASTBOUND)
+    "20250318_400773_201647_221532": ("LHR", "EWR"),   # London Heathrow → Newark
+}
 
 def hav(lat1,lon1,lat2,lon2):
     p1,p2=math.radians(lat1),math.radians(lat2)
@@ -446,6 +485,94 @@ def get_model_stats():
         out["bl_median"]=ts.get("baseline_median_error_km",out["bl_median"])
     return out
 
+@st.cache_data(ttl=90)
+def fetch_live_nat():
+    """Fetch current aircraft positions from OpenSky in the NAT area."""
+    url = ("https://opensky-network.org/api/states/all"
+           "?lamin=35&lamax=75&lomin=-75&lomax=15")
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "AeroFusion-Demo/1.0"})
+        with urllib.request.urlopen(req, timeout=12) as r:
+            data = json.loads(r.read().decode())
+        states = data.get("states") or []
+        aircraft = []
+        for s in states:
+            if not s or s[8]:  # skip on-ground
+                continue
+            lon, lat = s[5], s[6]
+            if lat is None or lon is None:
+                continue
+            lat, lon = float(lat), float(lon)
+            alt  = float(s[13] or s[7] or 0)
+            vel  = float(s[9]  or 0)
+            hdg  = float(s[10] or 0)
+            cs   = (s[1] or "").strip()
+            if alt < 7000 or vel < 150:
+                continue
+            aircraft.append({
+                "icao24": s[0], "callsign": cs, "lat": lat, "lon": lon,
+                "alt_ft": round(alt * 3.28084), "vel_kts": round(vel * 1.94384),
+                "hdg": hdg, "country": s[2] or "",
+            })
+        return aircraft, int(data.get("time", 0))
+    except Exception as exc:
+        return None, str(exc)
+
+
+def build_live_map(aircraft: list) -> go.Figure:
+    """Build Plotly map of live NAT traffic."""
+    westbound = [a for a in aircraft if 200 <= a["hdg"] <= 310]
+    eastbound = [a for a in aircraft if 40  <= a["hdg"] <= 130]
+    other     = [a for a in aircraft if a not in westbound and a not in eastbound]
+
+    def hover(a):
+        cs = a["callsign"] or a["icao24"]
+        return (f"<b>{cs}</b><br>"
+                f"Hdg {a['hdg']:.0f}° | {a['vel_kts']} kts<br>"
+                f"FL{a['alt_ft']//100:03d}<br>"
+                f"{a['country']}<extra></extra>")
+
+    fig = go.Figure()
+
+    def add_layer(group, color, label, symbol="airplane"):
+        if not group:
+            return
+        fig.add_trace(go.Scattermapbox(
+            lat=[a["lat"] for a in group],
+            lon=[a["lon"] for a in group],
+            mode="markers",
+            marker=dict(size=10, color=color, opacity=0.9, symbol="circle"),
+            name=label,
+            hovertemplate=[hover(a) for a in group],
+        ))
+
+    add_layer(westbound, "#10b981", f"Westbound ({len(westbound)})")
+    add_layer(eastbound, "#60a5fa", f"Eastbound ({len(eastbound)})")
+    add_layer(other,     "#94a3b8", f"Other ({len(other)})")
+
+    # NAT track corridor shading (approximate OTS box)
+    fig.add_trace(go.Scattermapbox(
+        lat=[65, 65, 45, 45, 65], lon=[-10, -60, -60, -10, -10],
+        mode="lines", line=dict(width=1, color="rgba(59,130,246,0.3)"),
+        fill="toself", fillcolor="rgba(59,130,246,0.04)",
+        name="NAT OTS corridor", showlegend=True, hoverinfo="skip",
+    ))
+
+    fig.update_layout(
+        mapbox=dict(style="carto-darkmatter",
+                    center=dict(lat=55, lon=-30), zoom=2.8),
+        paper_bgcolor="#0a0f1e", margin=dict(l=0, r=0, t=0, b=0), height=560,
+        showlegend=True,
+        legend=dict(bgcolor="rgba(10,15,30,0.9)", bordercolor="rgba(255,255,255,0.12)",
+                    borderwidth=1, font=dict(color="#cbd5e1", size=11,
+                                             family="JetBrains Mono"),
+                    x=0.01, y=0.99, xanchor="left", yanchor="top"),
+        hoverlabel=dict(bgcolor="#1e293b", bordercolor="rgba(255,255,255,0.15)",
+                        font=dict(family="JetBrains Mono", size=11, color="#f8fafc")),
+    )
+    return fig
+
+
 model        = get_model()
 catalog      = get_catalog()
 kf_params    = get_kalman_params()
@@ -486,8 +613,10 @@ with st.sidebar:
             fdf = fdf.sort_values("gap_duration_minutes", ascending=False).reset_index(drop=True)
 
     def lbl(row):
-        dep  = fmt_airport(row.get("estdepartureairport"))
-        arr  = fmt_airport(row.get("estarrivalairport"))
+        sid_ = str(row.get("segment_id", ""))
+        ov   = DEMO_AIRPORTS.get(sid_)
+        dep  = fmt_airport(ov[0] if ov else row.get("estdepartureairport"))
+        arr  = fmt_airport(ov[1] if ov else row.get("estarrivalairport"))
         cs_  = clean(row.get("flight_callsign") or row.get("segment_callsign"))
         gap_ = row.get("gap_duration_minutes", 0)
         day_ = int(row.get("_day", 0))
@@ -510,8 +639,9 @@ with st.sidebar:
     sel_row = fdf.iloc[sel_idx]
     segment_id = str(sel_row["segment_id"])
 
-    dep     = fmt_airport(sel_row.get("estdepartureairport"))
-    arr     = fmt_airport(sel_row.get("estarrivalairport"))
+    _ov     = DEMO_AIRPORTS.get(segment_id)
+    dep     = fmt_airport(_ov[0] if _ov else sel_row.get("estdepartureairport"))
+    arr     = fmt_airport(_ov[1] if _ov else sel_row.get("estarrivalairport"))
     cs      = clean(sel_row.get("flight_callsign") or sel_row.get("segment_callsign"))
     icao    = clean(sel_row.get("icao24", "")).upper()
     gap_cat = float(sel_row.get("gap_duration_minutes", 0))
@@ -598,6 +728,113 @@ st.markdown(f"""
     </div>
   </div>
 </div>""", unsafe_allow_html=True)
+
+tab_hist, tab_live = st.tabs(["Historical Flight Analysis", "Live NAT Tracker"])
+
+with tab_live:
+    st.markdown('<div class="sec-head" style="margin-top:6px;">LIVE NORTH ATLANTIC TRAFFIC - OPENSKY NETWORK</div>',
+                unsafe_allow_html=True)
+    st.markdown("""
+    <div class='info-box'>
+      Real-time aircraft positions over the North Atlantic fetched from the
+      <b>OpenSky Network</b> public REST API (refreshed every 90 s).
+      Flights shown are at cruise altitude (&gt;FL230) and cruise speed (&gt;290 kts).
+      Aircraft in the shaded NAT OTS corridor are the operational context where
+      AeroFusion's reconstruction model applies — they lose ADS-B coverage for 60-220 min.
+    </div>""", unsafe_allow_html=True)
+
+    live_col1, live_col2, live_col3, live_col4 = st.columns(4)
+    refresh_live = live_col1.button("Refresh Live Traffic", use_container_width=True)
+    if refresh_live:
+        st.cache_data.clear()
+
+    with st.spinner("Fetching live positions from OpenSky..."):
+        live_aircraft, live_ts = fetch_live_nat()
+
+    if live_aircraft is None:
+        st.markdown(f"""
+        <div class='info-box amber'>
+          OpenSky API unavailable: <code>{live_ts}</code><br>
+          The public OpenSky endpoint may be rate-limited (&lt;400 req/day without account).
+          Try again in a few minutes or <a href='https://opensky-network.org' style='color:#fcd34d;'>register a free account</a>.
+        </div>""", unsafe_allow_html=True)
+    else:
+        westbound_live = [a for a in live_aircraft if 200 <= a["hdg"] <= 310]
+        eastbound_live = [a for a in live_aircraft if 40  <= a["hdg"] <= 130]
+        nat_box        = [a for a in live_aircraft if -60 <= a["lon"] <= -10 and 45 <= a["lat"] <= 65]
+        ts_str = datetime.utcfromtimestamp(live_ts).strftime("%H:%M UTC") if live_ts else "unknown"
+
+        with live_col2:
+            st.markdown(f"""
+            <div class='metric-card mc-gru' style='min-height:80px;padding:12px 16px;'>
+              <div class='metric-label'>NAT Aircraft</div>
+              <div class='metric-value green' style='font-size:24px;'>{len(live_aircraft)}</div>
+            </div>""", unsafe_allow_html=True)
+        with live_col3:
+            st.markdown(f"""
+            <div class='metric-card mc-kalman' style='min-height:80px;padding:12px 16px;'>
+              <div class='metric-label'>In OTS Corridor</div>
+              <div class='metric-value blue' style='font-size:24px;'>{len(nat_box)}</div>
+            </div>""", unsafe_allow_html=True)
+        with live_col4:
+            st.markdown(f"""
+            <div class='metric-card mc-neutral' style='min-height:80px;padding:12px 16px;'>
+              <div class='metric-label'>Last Update</div>
+              <div class='metric-value purple' style='font-size:18px;margin-top:4px;'>{ts_str}</div>
+            </div>""", unsafe_allow_html=True)
+
+        st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
+        st.markdown('<div class="map-wrap">', unsafe_allow_html=True)
+        st.plotly_chart(build_live_map(live_aircraft), use_container_width=True,
+                        config={"displayModeBar": False, "scrollZoom": True})
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("""
+        <div class='legend-strip'>
+          <span><span class='lsym' style='color:#10b981;font-weight:700;'>●</span> Westbound (NAT typical)</span>
+          <span><span class='lsym' style='color:#60a5fa;font-weight:700;'>●</span> Eastbound (overnight)</span>
+          <span><span class='lsym' style='color:#94a3b8;font-weight:700;'>●</span> Other</span>
+          <span><span class='lsym' style='color:#3b82f6;'>&#9632;</span> Approx. NAT OTS corridor</span>
+          <span style='color:#475569;font-size:9px;'>Data: OpenSky Network - public API</span>
+        </div>""", unsafe_allow_html=True)
+
+        if nat_box:
+            st.markdown('<div class="sec-head" style="margin-top:16px;">AIRCRAFT CURRENTLY IN NAT OTS CORRIDOR</div>',
+                        unsafe_allow_html=True)
+            rows = sorted(nat_box, key=lambda a: -a["vel_kts"])[:20]
+            table_rows = "".join(
+                f"<tr><td>{a['callsign'] or a['icao24']}</td>"
+                f"<td>{a['country']}</td>"
+                f"<td>{a['lat']:.2f}&deg; N</td>"
+                f"<td>{a['lon']:.2f}&deg;</td>"
+                f"<td>FL{a['alt_ft']//100:03d}</td>"
+                f"<td>{a['vel_kts']} kts</td>"
+                f"<td>{a['hdg']:.0f}&deg;</td></tr>"
+                for a in rows
+            )
+            st.markdown(f"""
+            <table class='results-table'>
+              <thead><tr>
+                <th>Callsign</th><th>Country</th><th>Lat</th><th>Lon</th>
+                <th>Altitude</th><th>Speed</th><th>Heading</th>
+              </tr></thead>
+              <tbody>{table_rows}</tbody>
+            </table>
+            <div style='font-family:JetBrains Mono,monospace;font-size:8px;color:#475569;margin-top:6px;'>
+              These aircraft are currently in or approaching the ADS-C gap zone where AeroFusion reconstructs paths.
+              Top 20 by speed shown.
+            </div>""", unsafe_allow_html=True)
+
+        st.markdown("""
+        <div class='info-box' style='margin-top:16px;'>
+          <b>How reconstruction applies here:</b> When these aircraft enter the oceanic gap
+          (&gt;60&deg;W), ADS-B coverage drops out for 60-220 minutes. ATC relies on
+          ADS-C position reports every ~14 min. AeroFusion's BiGRU model reconstructs
+          the full trajectory using the last 64 ADS-B fixes before entry and the first
+          32 fixes after exit — achieving <b>47% lower error than great-circle interpolation</b>.
+        </div>""", unsafe_allow_html=True)
+
+tab_hist.__enter__()
 
 rh = f"{dep} → {arr}" if dep != "N/A" and arr != "N/A" else "North Atlantic Crossing"
 cs_tag   = f"<span class='tag tag-blue'>{cs}</span>" if cs != "-" else ""
@@ -893,7 +1130,8 @@ if math.isfinite(bl_mean) and math.isfinite(kf_mean) and bl_mean < kf_mean:
     </div>""", unsafe_allow_html=True)
 
 def build_map(gru_res, base_res, kf_res, adsc_df, bl_comp_df,
-              show_baseline, show_kalman, show_truth):
+              show_baseline, show_kalman, show_truth,
+              dep_code=None, arr_code=None):
     gru_track  = pd.DataFrame(gru_res["track"])
     base_dense = pd.DataFrame(gru_res.get("baseline_waypoints", []) or
                                base_res.get("baseline_waypoints", []))
@@ -956,62 +1194,59 @@ def build_map(gru_res, base_res, kf_res, adsc_df, bl_comp_df,
         "JFK": (40.6413, -73.7781), "BOS": (42.3656, -71.0096),
         "EWR": (40.6895, -74.1745), "YYZ": (43.6777, -79.6248),
         "ORD": (41.9742, -87.9073), "IAD": (38.9531, -77.4565),
-        "PHL": (39.8729, -75.2437),
+        "PHL": (39.8729, -75.2437), "CLT": (35.2144, -80.9473),
+        "MIA": (25.7959, -80.2870), "MCO": (28.4312, -81.3081),
+        "SFO": (37.6213,-122.3790), "ATL": (33.6407, -84.4277),
+        "DFW": (32.8998, -97.0403), "IAH": (29.9902, -95.3368),
+        "CUN": (21.0365, -86.8771),
     }
     _EU_AIRPORTS = {
         "LHR": (51.4700, -0.4543), "CDG": (49.0097,  2.5479),
         "DUB": (53.4213, -6.2701), "AMS": (52.3086,  4.7639),
         "FRA": (50.0379,  8.5622), "MAD": (40.4719, -3.5626),
-        "LIS": (38.7813, -9.1359),
+        "LIS": (38.7813, -9.1359), "LGW": (51.1537, -0.1821),
+        "ZRH": (47.4647,  8.5492), "IST": (41.2608, 28.7418),
+        "DOH": (25.2608, 51.5656), "TLV": (32.0055, 34.8854),
+        "DEL": (28.5562, 77.1000), "FCO": (41.8003, 12.2389),
+        "BRU": (50.9010,  4.4844),
+        "BCN": (41.2974,  2.0785),
     }
 
-    _apt_legend_added = [False]  # mutable list so inner function can flip it
+    _ALL_AIRPORTS = {**_NA_AIRPORTS, **_EU_AIRPORTS}
+    _apt_legend_added = [False]
 
-    def _add_airport(ep_lat, ep_lon):
-        apt_pool = _NA_AIRPORTS if ep_lon < -20.0 else _EU_AIRPORTS
-        best_code, best_alat, best_alon, best_dist = None, None, None, float("inf")
-        for code, (alat, alon) in apt_pool.items():
-            d = hav(ep_lat, ep_lon, alat, alon)
-            if d < best_dist:
-                best_dist = d
-                best_code, best_alat, best_alon = code, alat, alon
-        if best_dist > 800 or best_code is None:
+    def _draw_airport(apt_code, ep_lat, ep_lon):
+        """Draw connector from known airport to the track endpoint."""
+        coords = _ALL_AIRPORTS.get(apt_code)
+        if not coords:
             return
+        alat, alon = coords
         fig.add_trace(go.Scattermapbox(
-            lat=[ep_lat, best_alat],
-            lon=[ep_lon, best_alon],
+            lat=[ep_lat, alat], lon=[ep_lon, alon],
             mode="lines",
             line=dict(width=1.5, color="rgba(148,163,184,0.35)"),
-            showlegend=False,
-            hoverinfo="skip",
+            showlegend=False, hoverinfo="skip",
         ))
         fig.add_trace(go.Scattermapbox(
-            lat=[best_alat],
-            lon=[best_alon],
+            lat=[alat], lon=[alon],
             mode="markers+text",
             marker=dict(size=11, color="rgba(148,163,184,0.55)", symbol="circle"),
-            text=[best_code],
-            textposition="top center",
+            text=[apt_code], textposition="top center",
             textfont=dict(size=9, color="rgba(148,163,184,0.7)", family="JetBrains Mono"),
-            showlegend=False,
-            hoverinfo="skip",
+            showlegend=False, hoverinfo="skip",
         ))
         if not _apt_legend_added[0]:
             fig.add_trace(go.Scattermapbox(
-                lat=[None], lon=[None],
-                mode="lines",
+                lat=[None], lon=[None], mode="lines",
                 line=dict(width=1.5, color="rgba(148,163,184,0.35)"),
-                name="Est. airport connection",
-                showlegend=True,
+                name="Airport connection", showlegend=True,
             ))
             _apt_legend_added[0] = True
 
-    if not bef.empty:
-        _bef_pt = bef.iloc[0]
-        _add_airport(float(_bef_pt["latitude"]), float(_bef_pt["longitude"]))
-    if not aft.empty:
-        _aft_pt = aft.iloc[-1]
-        _add_airport(float(_aft_pt["latitude"]), float(_aft_pt["longitude"]))
+    if dep_code and not bef.empty:
+        _draw_airport(dep_code, float(bef.iloc[0]["latitude"]), float(bef.iloc[0]["longitude"]))
+    if arr_code and not aft.empty:
+        _draw_airport(arr_code, float(aft.iloc[-1]["latitude"]), float(aft.iloc[-1]["longitude"]))
 
     if not bef.empty:
         fig.add_trace(smap(bef["latitude"].tolist(), bef["longitude"].tolist(),
@@ -1094,7 +1329,9 @@ def build_map(gru_res, base_res, kf_res, adsc_df, bl_comp_df,
 
 st.markdown("<div class='map-wrap'>", unsafe_allow_html=True)
 fig = build_map(gru_res, base_res, kf_res, adsc_df, bl_comp_df,
-                show_baseline, show_kalman, show_truth)
+                show_baseline, show_kalman, show_truth,
+                dep_code=dep if dep != "N/A" else None,
+                arr_code=arr if arr != "N/A" else None)
 st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False, "scrollZoom": True})
 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -1320,3 +1557,5 @@ st.markdown("""
             border-top:1px solid rgba(255,255,255,0.05);'>
   AEROFUSION - ADS-B + ADS-C SENSOR FUSION - SHANWICK / NORTH ATLANTIC OCEAN TRACKS - USJ LEBANON - AEROENGINEERING 2025
 </div>""", unsafe_allow_html=True)
+
+tab_hist.__exit__(None, None, None)

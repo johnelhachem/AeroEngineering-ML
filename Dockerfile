@@ -23,8 +23,6 @@ RUN pip install -e . --no-deps 2>/dev/null || true
 # Copy application files
 COPY demo_app.py ./
 COPY README.md ./
-COPY scripts ./scripts
-COPY docs ./docs
 COPY notebooks ./notebooks
 
 # Copy only the artifact folders needed to run the demo
@@ -32,6 +30,8 @@ COPY notebooks ./notebooks
 # These are copied from your local disk - no internet download needed
 RUN mkdir -p artifacts/step2_clean/flights
 COPY artifacts/step2_clean/catalog ./artifacts/step2_clean/catalog
+# --- Demo flights (19 total) ---
+# Original set
 COPY artifacts/step2_clean/flights/20250801_4007f1_173814_202441 ./artifacts/step2_clean/flights/20250801_4007f1_173814_202441
 COPY artifacts/step2_clean/flights/20231114_485341_032118_043049 ./artifacts/step2_clean/flights/20231114_485341_032118_043049
 COPY artifacts/step2_clean/flights/20240827_4b187f_064414_074830 ./artifacts/step2_clean/flights/20240827_4b187f_064414_074830
@@ -42,6 +42,16 @@ COPY artifacts/step2_clean/flights/20240822_ac21af_054936_065856 ./artifacts/ste
 COPY artifacts/step2_clean/flights/20231105_a0a54d_030849_041552 ./artifacts/step2_clean/flights/20231105_a0a54d_030849_041552
 COPY artifacts/step2_clean/flights/20240710_4007f0_092932_103853 ./artifacts/step2_clean/flights/20240710_4007f0_092932_103853
 COPY artifacts/step2_clean/flights/20250318_400773_201647_221532 ./artifacts/step2_clean/flights/20250318_400773_201647_221532
+# New curated set
+COPY artifacts/step2_clean/flights/20250329_4b1883_132449_153308 ./artifacts/step2_clean/flights/20250329_4b1883_132449_153308
+COPY artifacts/step2_clean/flights/20250319_4005c0_152300_180926 ./artifacts/step2_clean/flights/20250319_4005c0_152300_180926
+COPY artifacts/step2_clean/flights/20250729_400773_193333_215630 ./artifacts/step2_clean/flights/20250729_400773_193333_215630
+COPY artifacts/step2_clean/flights/20250214_400773_210838_231648 ./artifacts/step2_clean/flights/20250214_400773_210838_231648
+COPY artifacts/step2_clean/flights/20250703_aab812_102726_123306 ./artifacts/step2_clean/flights/20250703_aab812_102726_123306
+COPY artifacts/step2_clean/flights/20250731_485f82_101311_120739 ./artifacts/step2_clean/flights/20250731_485f82_101311_120739
+COPY artifacts/step2_clean/flights/20250313_aa2184_162016_182107 ./artifacts/step2_clean/flights/20250313_aa2184_162016_182107
+COPY artifacts/step2_clean/flights/20241220_4b1883_192140_213810 ./artifacts/step2_clean/flights/20241220_4b1883_192140_213810
+COPY artifacts/step2_clean/flights/20231118_4005bd_022514_042151 ./artifacts/step2_clean/flights/20231118_4005bd_022514_042151
 COPY artifacts/step4_ml_dataset/catalog ./artifacts/step4_ml_dataset/catalog
 COPY artifacts/step5_gru ./artifacts/step5_gru
 COPY artifacts/step5_kalman ./artifacts/step5_kalman
