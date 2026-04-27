@@ -166,8 +166,8 @@ docker run -p 8501:8501 -p 8000:8000 johnelhachem/aeroengineering_ml:latest
 
 ```bash
 # 1. Clone
-git clone https://github.com/<your-org>/AeroFusion.git
-cd AeroFusion
+git clone https://github.com/johnelhachem/AeroEngineering-ML.git
+cd AeroEngineering-ML
 
 # 2. Create virtual environment
 python -m venv .venv
